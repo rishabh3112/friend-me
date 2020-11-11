@@ -35,21 +35,38 @@
   </div>
   <div class="chat-window" v-else-if="this.socket !== undefined">
     <div class="message">
-      <ul id="example-1">
-        <li v-for="item in messages" :key="item.message">
-          {{item.user}}:{{ item.message }}
-        </li>
-      </ul>
+      <div v-for="item in messages" :key="item.message" class="row">
+        <div v-if="item.user === name" class="me bubble right-align col s5 m5 l5">
+          <b>{{item.user}}</b>
+          <br/>
+          {{item.message}}
+        </div>
+        <div v-else-if="item.user === 'admin'" class="center-align">
+          <b>{{item.message}}</b>
+        </div>
+        <div v-else class="them bubble left-align col s5 m5 l5">
+          <b>{{item.user}}</b>
+          <br/>
+          {{item.message}}
+        </div>
+        
+      </div>
     </div>
     <div class="chat white row valign-wrapper">
-      <div class="input-field col s10">
+      <div class="input-field col s11">
         <input v-model="message" id="age" class="validate" />
       </div>
-      <div class="col s2 btn" @click="send()">send</div>
+      <div class="col s1">
+        <div class="btn-floating" @click="send()">
+          <i class="material-icons">send</i>
+        </div>
+      </div>
     </div>
   </div>
   <div class="chat-window" v-else>
-
+    <div class="progress">
+        <div class="indeterminate"></div>
+    </div>
   </div>
 </template>
 
@@ -71,7 +88,7 @@ export default {
   },
   methods: {
     async submit() {
-      const response = await fetch('http://127.0.0.1:5000/', {
+      const response = await fetch('http://192.168.0.107:5000/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json;charset=utf-8'
@@ -86,10 +103,9 @@ export default {
       });
       const result = await response.json();
       this.room = result.room;
-      this.socket = io('http://127.0.0.1:5000/');
+      this.socket = io('http://192.168.0.107:5000/');
       this.socket.on('connect', () => {
         this.socket.emit('join', {name: this.name, room: this.room});
-        console.log("APPLE");
       })
       this.socket.on('message', data => {
         if (!data.user) {
@@ -100,6 +116,9 @@ export default {
       })
     },
     async send() {
+      if (this.message === "") {
+        return;
+      }
       this.socket.send(
         {
           message: {
@@ -129,6 +148,7 @@ export default {
 .user-details {
   width: 50%;
   max-width: 500px;
+  min-width: 300px;
   background: #fff;
   padding: 20px;
   box-shadow: 0px 0px 10px #eee;
@@ -138,15 +158,23 @@ export default {
   height: 80px;
   width: 100%;
   box-shadow: 0px 0px 10px #eee;
-  padding-left: 10px;
-  padding-right: 10px;
+  padding-left: 40px;
+  padding-right: 40px;
 }
 
 .message {
   height: calc(100% - 80px);
+  padding: 20px;
+  overflow: auto;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .heading {
+  font-family: "Permanent Marker", cursive;
+}
+
+b {
   font-family: "Permanent Marker", cursive;
 }
 
@@ -156,8 +184,51 @@ export default {
   height: 100%;
 }
 
+.bubble {
+  background: #99f;
+  padding: 10px;
+  box-shadow: 0px 0px 10px #eee;
+  max-width: 400px;
+  word-wrap: break-word;
+  border-radius: 5px;
+  position: relative;
+}
+
+.me {
+  width: 100%;
+  background: #9f9;
+  float: right;
+}
+
 label.col {
   margin-top: 10px;
   margin-bottom: 20px;
 }
+
+.me:before {
+  content: "";
+  width: 0px;
+  height: 0px;
+  position: absolute;
+  border-left: 10px solid #9f9;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #9f9;
+  border-bottom: 10px solid transparent;
+  right: -19px;
+  top: 6px;
+}
+
+.them:before {
+  content: "";
+  width: 0px;
+  height: 0px;
+  position: absolute;
+  border-left: 10px solid transparent;
+  border-right: 10px solid #99f;
+  border-top: 10px solid #99f;
+  border-bottom: 10px solid transparent;
+  left: -19px;
+  top: 6px;
+}
+
 </style>
