@@ -14,14 +14,29 @@ model = load('model.m')
 features = ['age', 'movie', 'sports', 'travel']
 
 
-def classify(user):
-    X = []
-    for feature in features:
-      X.append(user[feature])
-    X = np.array(X)
-    X.reshape(1, -1)
-    # return model.predict(X)[0]
-    return 'A'
+def classify(years,sprt,trvl,mov_num):
+    arr = []
+    if mov_num == 0:
+        arr = [1,0,0,0]
+    if mov_num == 1:
+        arr = [0,1,0,0]
+    if mov_num == 2:
+        arr = [0,0,1,0]
+    if mov_num == 3:
+        arr = [0,0,0,1]
+    
+    inp = [years, sprt, trvl] + arr   
+    ans = model.predict([inp])
+
+    if ans == 0:
+        ans = 'A'
+    elif ans == 1:
+        ans = 'B'
+    elif ans == 2:
+        ans = 'C'        
+
+    print(ans)
+    return(ans)
 
 
 @app.route('/', methods=['POST'])
@@ -31,7 +46,7 @@ def home():
     user['name'] = data['name']
     for feature in features:
         user[feature] = data[feature]
-    user['room'] = classify(user)
+    user['room'] = classify(user['age'], user['sports'], user['travel'], user['movie'])
     return jsonify(user)
 
 

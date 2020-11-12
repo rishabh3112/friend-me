@@ -1,4 +1,5 @@
 <template>
+  <transition name="fade">
   <div v-if="room === undefined" class="home-page">
     <div class="user-details row">
       <h3 class="col s12 center-align heading">Friend Me</h3>
@@ -16,10 +17,10 @@
       <div class="input-field col s12">
         <span class="grey-text">Movie</span>
         <select v-model="movie" class="browser-default">
-          <option>action and adventure</option>
-          <option>comedy and drama</option>
-          <option>horror</option>
-          <option>mystery and thriller</option>
+          <option value="0">action and adventure</option>
+          <option value="1">comedy and drama</option>
+          <option value="2">horror</option>
+          <option value="3">mystery and thriller</option>
         </select>
       </div>
       <label class="col s6">
@@ -36,24 +37,26 @@
   <div class="chat-window" v-else-if="this.socket !== undefined">
     <div class="message">
       <div v-for="item in messages" :key="item.message" class="row">
-        <div v-if="item.user === name" class="me bubble right-align col s5 m5 l5">
-          <b>{{item.user}}</b>
-          <br/>
-          {{item.message}}
+        <div
+          v-if="item.user === name"
+          class="me bubble right-align col s5 m5 l5"
+        >
+          <b>{{ item.user }}</b>
+          <br />
+          {{ item.message }}
         </div>
         <div v-else-if="item.user === 'admin'" class="center-align">
-          <b>{{item.message}}</b>
+          <b class="admin-msg">{{ item.message }}</b>
         </div>
         <div v-else class="them bubble left-align col s5 m5 l5">
-          <b>{{item.user}}</b>
-          <br/>
-          {{item.message}}
+          <b>{{ item.user }}</b>
+          <br />
+          {{ item.message }}
         </div>
-        
       </div>
     </div>
     <div class="chat white row valign-wrapper">
-      <div class="input-field col s11">
+      <div class="input-field col s10">
         <input v-model="message" id="age" class="validate" />
       </div>
       <div class="col s1">
@@ -61,13 +64,19 @@
           <i class="material-icons">send</i>
         </div>
       </div>
+      <div class="col s1">
+        <div class="btn-floating red" @click="exit()">
+          <i class="material-icons">cancel</i>
+        </div>
+      </div>
     </div>
   </div>
   <div class="chat-window" v-else>
     <div class="progress">
-        <div class="indeterminate"></div>
+      <div class="indeterminate"></div>
     </div>
   </div>
+  </transition>
 </template>
 
 <script>
@@ -76,60 +85,71 @@ export default {
   data: () => {
     return {
       name: "",
-      age: 20,
-      movie: "",
+      age: undefined,
+      movie: undefined,
       sports: false,
       travel: false,
       room: undefined,
       socket: undefined,
       message: "",
-      messages: []
+      messages: [],
     };
   },
   methods: {
     async submit() {
-      const response = await fetch('http://192.168.0.107:5000/', {
-        method: 'POST',
+      console.log(this.movie);
+      const response = await fetch("http://192.168.0.107:5000/", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json;charset=utf-8'
+          "Content-Type": "application/json;charset=utf-8",
         },
         body: JSON.stringify({
           name: this.name,
           age: parseInt(this.age),
-          movie: this.movie,
+          movie: parseInt(this.movie),
           sports: this.sports,
-          travel: this.travel
-        })
+          travel: this.travel,
+        }),
       });
       const result = await response.json();
       this.room = result.room;
-      this.socket = io('http://192.168.0.107:5000/');
-      this.socket.on('connect', () => {
-        this.socket.emit('join', {name: this.name, room: this.room});
-      })
-      this.socket.on('message', data => {
+      this.socket = io("http://192.168.0.107:5000/");
+      this.socket.on("connect", () => {
+        this.socket.emit("join", { name: this.name, room: this.room });
+      });
+      this.socket.on("message", (data) => {
         if (!data.user) {
-          this.messages.push({user: "admin", message: data});
+          this.messages.push({ user: "admin", message: data });
           return;
         }
-        this.messages.push(data)
-      })
+        this.messages.push(data);
+      });
     },
     async send() {
       if (this.message === "") {
         return;
       }
-      this.socket.send(
-        {
-          message: {
-            user: this.name,
-            message: this.message
-          },
-          room: this.room
-        }
-      );
+      this.socket.send({
+        message: {
+          user: this.name,
+          message: this.message,
+        },
+        room: this.room,
+      });
       this.message = "";
-    }
+    },
+    async exit() {
+      this.socket.emit("leave", { name: this.name, room: this.room });
+      this.socket.close();
+
+      this.room = undefined;
+      this.socket = undefined;
+      this.name = "";
+      this.age = undefined;
+      this.sports = false;
+      this.travel = false;
+      this.movie = undefined;
+    },
   },
 };
 </script>
@@ -142,7 +162,13 @@ export default {
   align-items: center;
   align-content: center;
   justify-content: center;
-  background: url("./assets/spikes.png");
+}
+
+.admin-msg {
+  background: #fff;
+  padding: 3px 10px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px #aaa;
 }
 
 .user-details {
@@ -158,8 +184,9 @@ export default {
   height: 80px;
   width: 100%;
   box-shadow: 0px 0px 10px #eee;
-  padding-left: 40px;
-  padding-right: 40px;
+  padding: 0px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .message {
@@ -180,23 +207,22 @@ b {
 
 .chat-window {
   overflow: hidden;
-  background: url("./assets/spikes.png");
   height: 100%;
 }
 
 .bubble {
   background: #99f;
   padding: 10px;
-  box-shadow: 0px 0px 10px #eee;
   max-width: 400px;
   word-wrap: break-word;
   border-radius: 5px;
   position: relative;
+  box-shadow: 0px 0px 10px #aaa;
 }
 
 .me {
   width: 100%;
-  background: #9f9;
+  background: #cfc;
   float: right;
 }
 
@@ -210,9 +236,9 @@ label.col {
   width: 0px;
   height: 0px;
   position: absolute;
-  border-left: 10px solid #9f9;
+  border-left: 10px solid #cfc;
   border-right: 10px solid transparent;
-  border-top: 10px solid #9f9;
+  border-top: 10px solid #cfc;
   border-bottom: 10px solid transparent;
   right: -19px;
   top: 6px;
@@ -231,4 +257,12 @@ label.col {
   top: 6px;
 }
 
+.fade-enter-active, .fade-leave-active {
+  transition: all .5s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+  transform: scale(0);
+  border-radius: 50%;
+}
 </style>
