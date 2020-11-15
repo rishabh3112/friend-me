@@ -35,17 +35,29 @@
     </div>
   </div>
   <div class="chat-window" v-else-if="this.socket !== undefined">
+    <div class="chat-header row valign-wrapper">
+      <div class="col s11 valign-wrapper">
+        <img class="icon" src='./assets/favicon.ico' />
+        <span> Room {{room}} </span>
+      </div>
+      <div class="col s1">
+        <div class="btn-floating red" @click="exit()">
+          <i class="material-icons">clear</i>
+        </div>
+      </div>
+    </div>
     <div class="message">
+      <transition-group name="list" tag="p">
       <div v-for="item in messages" :key="item.message" class="row">
         <div
-          v-if="item.user === name"
+          v-if="item.id === this.id"
           class="me bubble right-align col s5 m5 l5"
         >
           <b>{{ item.user }}</b>
           <br />
           {{ item.message }}
         </div>
-        <div v-else-if="item.user === 'admin'" class="center-align">
+        <div v-else-if="item.id === undefined" class="center-align">
           <b class="admin-msg">{{ item.message }}</b>
         </div>
         <div v-else class="them bubble left-align col s5 m5 l5">
@@ -54,19 +66,15 @@
           {{ item.message }}
         </div>
       </div>
+      </transition-group>
     </div>
     <div class="chat white row valign-wrapper">
-      <div class="input-field col s10">
+      <div class="input-field col s11">
         <input v-model="message" id="age" class="validate" />
       </div>
       <div class="col s1">
         <div class="btn-floating" @click="send()">
           <i class="material-icons">send</i>
-        </div>
-      </div>
-      <div class="col s1">
-        <div class="btn-floating red" @click="exit()">
-          <i class="material-icons">cancel</i>
         </div>
       </div>
     </div>
@@ -91,6 +99,7 @@ export default {
       travel: false,
       room: undefined,
       socket: undefined,
+      id: undefined,
       message: "",
       messages: [],
     };
@@ -98,7 +107,7 @@ export default {
   methods: {
     async submit() {
       console.log(this.movie);
-      const response = await fetch("http://192.168.0.107:5000/", {
+      const response = await fetch("http://0.0.0.0:5000/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json;charset=utf-8",
@@ -113,7 +122,8 @@ export default {
       });
       const result = await response.json();
       this.room = result.room;
-      this.socket = io("http://192.168.0.107:5000/");
+      this.id = result.id;
+      this.socket = io("http://0.0.0.0:5000/");
       this.socket.on("connect", () => {
         this.socket.emit("join", { name: this.name, room: this.room });
       });
@@ -125,6 +135,7 @@ export default {
         this.messages.push(data);
       });
     },
+
     async send() {
       if (this.message === "") {
         return;
@@ -132,12 +143,14 @@ export default {
       this.socket.send({
         message: {
           user: this.name,
+          id: this.id,
           message: this.message,
         },
         room: this.room,
       });
       this.message = "";
     },
+
     async exit() {
       this.socket.emit("leave", { name: this.name, room: this.room });
       this.socket.close();
@@ -149,7 +162,9 @@ export default {
       this.sports = false;
       this.travel = false;
       this.movie = undefined;
+      this.messages = []
     },
+
   },
 };
 </script>
@@ -164,11 +179,16 @@ export default {
   justify-content: center;
 }
 
+.icon {
+  width: 40px;
+  border-radius: 20px;
+  margin:0px 10px;
+}
 .admin-msg {
   background: #fff;
   padding: 3px 10px;
   border-radius: 5px;
-  box-shadow: 0px 0px 10px #aaa;
+  box-shadow: 0px 0px 10px #555;
 }
 
 .user-details {
@@ -177,20 +197,31 @@ export default {
   min-width: 300px;
   background: #fff;
   padding: 20px;
-  box-shadow: 0px 0px 10px #eee;
+  box-shadow: 0px 0px 10px #555;
 }
 
 .chat {
-  height: 80px;
+  height: 50px;
   width: 100%;
-  box-shadow: 0px 0px 10px #eee;
+  box-shadow: 0px 0px 10px #555;
   padding: 0px;
   padding-left: 10px;
   padding-right: 10px;
 }
 
+.chat-header {
+  height: 50px;
+  width: 100%;
+  box-shadow: 0px 0px 10px #555;
+  background: #fff;
+  margin-bottom: 0px;
+  font-family: "Permanent Marker", cursive;
+  font-size: 25px;
+  padding: 0px 10px;
+}
+
 .message {
-  height: calc(100% - 80px);
+  height: calc(100% - 100px);
   padding: 20px;
   overflow: auto;
   width: 100%;
@@ -217,7 +248,7 @@ b {
   word-wrap: break-word;
   border-radius: 5px;
   position: relative;
-  box-shadow: 0px 0px 10px #aaa;
+  box-shadow: 0px 0px 10px #555;
 }
 
 .me {
@@ -263,6 +294,15 @@ label.col {
 .fade-enter, .fade-leave-to {
   opacity: 0;
   transform: scale(0);
-  border-radius: 50%;
+}
+
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.25s ease;
+}
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
 }
 </style>

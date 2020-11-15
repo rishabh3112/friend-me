@@ -9,10 +9,9 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 rooms = ['A', 'B', 'C']
-users = {}
 model = load('model.m')
 features = ['age', 'movie', 'sports', 'travel']
-
+cnt = 0
 
 def classify(years,sprt,trvl,mov_num):
     arr = []
@@ -41,12 +40,15 @@ def classify(years,sprt,trvl,mov_num):
 
 @app.route('/', methods=['POST'])
 def home():
+    global cnt
     user = {}
     data = request.json
     user['name'] = data['name']
     for feature in features:
         user[feature] = data[feature]
     user['room'] = classify(user['age'], user['sports'], user['travel'], user['movie'])
+    user['id'] = cnt
+    cnt = cnt + 1
     return jsonify(user)
 
 
@@ -70,4 +72,4 @@ def handle_message(data):
     send(data['message'], room=data['room'])
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0')
+    socketio.run(app, host='0.0.0.0')   
