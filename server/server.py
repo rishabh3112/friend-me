@@ -34,7 +34,6 @@ def classify(years,sprt,trvl,mov_num):
     elif ans == 2:
         ans = 'C'        
 
-    print(ans)
     return(ans)
 
 
