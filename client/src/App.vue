@@ -1,89 +1,91 @@
 <template>
   <transition name="fade">
-  <div v-if="room === undefined" class="home-page">
-    <div class="user-details row">
-      <h3 class="col s12 center-align heading">Friend Me</h3>
-      <p class="col s12 center-align grey-text text-darken-2">
-        Chat with people you can connect with
-      </p>
-      <div class="input-field col s6">
-        <input v-model="name" id="name" type="text" class="validate" />
-        <label for="name">Name</label>
+    <div v-if="room === undefined" class="home-page">
+      <div class="user-details row">
+        <h3 class="col s12 center-align heading">Friend Me</h3>
+        <p class="col s12 center-align grey-text text-darken-2">
+          Chat with people you can connect with
+        </p>
+        <div class="input-field col s6">
+          <input v-model="name" id="name" type="text" class="validate" />
+          <label for="name">Name</label>
+        </div>
+        <div class="input-field col s6">
+          <input v-model="age" id="age" type="number" class="validate" />
+          <label for="age">Age</label>
+        </div>
+        <div class="input-field col s12">
+          <span class="grey-text">Movie</span>
+          <select v-model="movie" class="browser-default">
+            <option value="0">action and adventure</option>
+            <option value="1">comedy and drama</option>
+            <option value="2">horror</option>
+            <option value="3">mystery and thriller</option>
+          </select>
+        </div>
+        <label class="col s6">
+          <input v-model="sports" type="checkbox" />
+          <span>Sports</span>
+        </label>
+        <label class="col s6">
+          <input v-model="travel" type="checkbox" />
+          <span>Travel</span>
+        </label>
+        <div class="col s12 btn" @click="submit()">Submit</div>
       </div>
-      <div class="input-field col s6">
-        <input v-model="age" id="age" type="number" class="validate" />
-        <label for="age">Age</label>
-      </div>
-      <div class="input-field col s12">
-        <span class="grey-text">Movie</span>
-        <select v-model="movie" class="browser-default">
-          <option value="0">action and adventure</option>
-          <option value="1">comedy and drama</option>
-          <option value="2">horror</option>
-          <option value="3">mystery and thriller</option>
-        </select>
-      </div>
-      <label class="col s6">
-        <input v-model="sports" type="checkbox" />
-        <span>Sports</span>
-      </label>
-      <label class="col s6">
-        <input v-model="travel" type="checkbox" />
-        <span>Travel</span>
-      </label>
-      <div class="col s12 btn" @click="submit()">Submit</div>
     </div>
-  </div>
-  <div class="chat-window" v-else-if="this.socket !== undefined">
-    <div class="chat-header row valign-wrapper">
-      <div class="col s11 valign-wrapper">
-        <img class="icon" src='./assets/favicon.ico' />
-        <span> Room {{room}} </span>
+
+    <div class="chat-window" v-else-if="this.socket !== undefined">
+      <div class="chat-header row valign-wrapper">
+        <div class="col s11 valign-wrapper">
+          <img class="icon" src='./assets/favicon.ico' />
+          <span> Room {{room}} </span>
+        </div>
+        <div class="col s1">
+          <div class="btn-floating red" @click="exit()">
+            <i class="material-icons">clear</i>
+          </div>
+        </div>
       </div>
-      <div class="col s1">
-        <div class="btn-floating red" @click="exit()">
-          <i class="material-icons">clear</i>
+      <div class="message">
+        <transition-group name="list" tag="p">
+        <div v-for="item in messages" :key="item.message" class="row">
+          <div
+            v-if="item.id === this.id"
+            class="me bubble right-align col s5 m5 l5"
+          >
+            <b>{{ item.user }}</b>
+            <br />
+            {{ item.message }}
+          </div>
+          <div v-else-if="item.id === undefined" class="center-align">
+            <b class="admin-msg">{{ item.message }}</b>
+          </div>
+          <div v-else class="them bubble left-align col s5 m5 l5">
+            <b>{{ item.user }}</b>
+            <br />
+            {{ item.message }}
+          </div>
+        </div>
+        </transition-group>
+      </div>
+      <div class="chat white row valign-wrapper">
+        <div class="input-field col s11">
+          <input v-model="message" id="age" class="validate" />
+        </div>
+        <div class="col s1">
+          <div class="btn-floating" @click="send()">
+            <i class="material-icons">send</i>
+          </div>
         </div>
       </div>
     </div>
-    <div class="message">
-      <transition-group name="list" tag="p">
-      <div v-for="item in messages" :key="item.message" class="row">
-        <div
-          v-if="item.id === this.id"
-          class="me bubble right-align col s5 m5 l5"
-        >
-          <b>{{ item.user }}</b>
-          <br />
-          {{ item.message }}
-        </div>
-        <div v-else-if="item.id === undefined" class="center-align">
-          <b class="admin-msg">{{ item.message }}</b>
-        </div>
-        <div v-else class="them bubble left-align col s5 m5 l5">
-          <b>{{ item.user }}</b>
-          <br />
-          {{ item.message }}
-        </div>
-      </div>
-      </transition-group>
-    </div>
-    <div class="chat white row valign-wrapper">
-      <div class="input-field col s11">
-        <input v-model="message" id="age" class="validate" />
-      </div>
-      <div class="col s1">
-        <div class="btn-floating" @click="send()">
-          <i class="material-icons">send</i>
-        </div>
+    
+    <div class="chat-window" v-else>
+      <div class="progress">
+        <div class="indeterminate"></div>
       </div>
     </div>
-  </div>
-  <div class="chat-window" v-else>
-    <div class="progress">
-      <div class="indeterminate"></div>
-    </div>
-  </div>
   </transition>
 </template>
 
@@ -106,7 +108,6 @@ export default {
   },
   methods: {
     async submit() {
-      console.log(this.movie);
       const response = await fetch("http://0.0.0.0:5000/", {
         method: "POST",
         headers: {
@@ -120,6 +121,7 @@ export default {
           travel: this.travel,
         }),
       });
+
       const result = await response.json();
       this.room = result.room;
       this.id = result.id;
@@ -140,6 +142,7 @@ export default {
       if (this.message === "") {
         return;
       }
+
       this.socket.send({
         message: {
           user: this.name,
@@ -148,6 +151,7 @@ export default {
         },
         room: this.room,
       });
+
       this.message = "";
     },
 
