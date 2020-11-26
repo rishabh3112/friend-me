@@ -7,33 +7,33 @@ import random
 import numpy as np
 import pandas as pd
 
-# # Age
-# age = []
-# for i in range(500):
-#     num = random.gauss(25, 3)
-#     num = int(num)
-#     age.append(num)
+# Age
+age = []
+for i in range(500):
+    num = random.gauss(25, 3)
+    num = int(num)
+    age.append(num)
 
-# # Sports yes/no
-# sports = []
-# for i in range(500):
-#     sports.append(random.choice([0, 1]))
+# Sports yes/no
+sports = []
+for i in range(500):
+    sports.append(random.choice([0, 1]))
 
-# genre = ['action and adventure', 'comedy and drama',
-#          'horror', 'mystery and thriller']
-# movies = []
-# for i in range(500):
-#     movies.append(random.choice(genre))
+genre = ['action and adventure', 'comedy and drama',
+         'horror', 'mystery and thriller']
+movies = []
+for i in range(500):
+    movies.append(random.choice(genre))
 
-# # travel
-# travel = []
-# for i in range(500):
-#     travel.append(random.choice([0, 1]))
+# travel
+travel = []
+for i in range(500):
+    travel.append(random.choice([0, 1]))
 
 
-# features = []
-# for i in range(500):
-#     features.append([age[i], movies[i], sports[i], travel[i]])
+features = []
+for i in range(500):
+    features.append([age[i], movies[i], sports[i], travel[i]])
 
 # Clustering
 X = np.array(features)
