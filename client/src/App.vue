@@ -57,6 +57,8 @@
             <b>{{ item.user }}</b>
             <br />
             {{ item.message }}
+            <br />
+            <small v-if="item.profane">Original message contained explicit words. <b>{{item.user}}</b> will be removed if used explicit words in {{profaneAllowed}} more messages</small>
           </div>
           <div v-else-if="item.id === undefined" class="center-align">
             <b class="admin-msg">{{ item.message }}</b>
@@ -90,11 +92,14 @@
 </template>
 
 <script>
+import Filter from 'bad-words'
+const filter = new Filter();
 export default {
   name: "App",
   data: () => {
     return {
       name: "",
+      profaneAllowed: 3,
       age: undefined,
       movie: undefined,
       sports: false,
@@ -131,8 +136,18 @@ export default {
       });
       this.socket.on("message", (data) => {
         if (!data.user) {
-          this.messages.push({ user: "admin", message: data });
+          this.messages.push({ user: "admin", message: filter.clean(data) });
           return;
+        }
+        data.profane = false;
+        if (filter.isProfane(data.message)) {
+          if (this.profaneAllowed == 0) {
+            this.exit();
+            return;
+          }
+          data.message = filter.clean(data.message);
+          data.profane = true;
+          this.profaneAllowed--;
         }
         this.messages.push(data);
       });
@@ -158,7 +173,7 @@ export default {
     async exit() {
       this.socket.emit("leave", { name: this.name, room: this.room });
       this.socket.close();
-
+      this.profaneAllowed = 3;
       this.room = undefined;
       this.socket = undefined;
       this.name = "";
